@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; connect-src 'self'">
+    <meta charset="utf-8">
     <title>Site In Progress</title>
 
-    <style type="text/css" media="screen">
+    <style>
       body {
         background-color: #f1f1f1;
         margin: 0;
@@ -34,27 +33,6 @@
         font-size: 15px;
       }
 
-      .status {
-        margin-top: 30px;
-        font-size: 14px;
-        color: #888;
-      }
-
-      .bar {
-        width: 100%;
-        height: 10px;
-        background: #ddd;
-        border-radius: 5px;
-        margin-top: 20px;
-        overflow: hidden;
-      }
-
-      .bar > div {
-        width: 65%;
-        height: 100%;
-        background: #4183c4;
-      }
-
       a {
         color: #4183c4;
         text-decoration: none;
@@ -62,6 +40,24 @@
 
       a:hover {
         text-decoration: underline;
+      }
+
+      #dev-note {
+        display: none;
+        margin-top: 30px;
+        padding: 12px;
+        background: #fafafa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        color: #666;
+        font-size: 14px;
+      }
+
+      code {
+        background: #eee;
+        padding: 2px 5px;
+        border-radius: 3px;
+        font-family: Consolas, Monaco, monospace;
       }
     </style>
   </head>
@@ -75,14 +71,43 @@
       <p>
         We're working hard behind the scenes to bring something awesome online.
       </p>
-	  <br></br>
-	  <p>
+
+      <br>
+
+      <p>
         Devs, if you can see this, the website is <b>online</b> and <b>working</b>.
       </p>
 
       <p>
         <a href="mailto:itzjpn@outlook.com">Contact Webmaster</a>
       </p>
+
+      <div id="dev-note"></div>
     </div>
+
+    <script>
+      (function () {
+        const params = new URLSearchParams(window.location.search);
+        const url = params.get("url");
+
+        if (url) {
+          const note = document.getElementById("dev-note");
+
+          const escapedURL = url
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+          note.innerHTML =
+            'Note to devs: <code>' +
+            escapedURL +
+            '</code> is currently functioning. The DNS is set up correctly.';
+
+          note.style.display = "block";
+        }
+      })();
+    </script>
   </body>
 </html>
