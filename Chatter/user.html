@@ -101,10 +101,27 @@
         border-bottom: 1px solid #edeff1;
         flex: 1;
     }
+    
+    /* IDENTITY HEADER (PFP + NAME) */
+    .profile-identity-block {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+    .profile-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 8px;
+        object-fit: cover;
+        background-color: #f6f7f8;
+        border: 1px solid #edeff1;
+    }
+
     .profile-meta {
         font-size: 12px;
         color: #787c7e;
-        margin-bottom: 12px;
+        margin-bottom: 6px;
         display: flex;
         gap: 6px;
         align-items: center;
@@ -132,7 +149,6 @@
     .profile-title {
         font-size: 26px;
         font-weight: 600;
-        margin-bottom: 12px;
         color: #1a1a1b;
     }
     .profile-actions {
@@ -266,7 +282,7 @@
   import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyAyKbmWh1MZJiwSQ5DVlmt7Lgz9e7oY82A",
+    apiKey: "AIzaSyAyKbmWh1MZJiwSQ5DVmt7Lgz9e7oY82A",
     authDomain: "new-chatter-68eb4.firebaseapp.com",
     projectId: "new-chatter-68eb4",
     storageBucket: "new-chatter-68eb4.firebasestorage.app",
@@ -287,13 +303,11 @@
 
   const profileContainer = document.getElementById("profileContainer");
 
-  // Setup Marked Markdown Parsing Options
   marked.setOptions({
     sanitize: true,
     breaks: true
   });
 
-  // Custom Extension to automatically transform u/ and c/ strings into hyperlinks
   const mentionExtension = {
     name: 'mention',
     level: 'inline',
@@ -385,7 +399,7 @@
           const adminBadgeHtml = targetUserData.admin === true ? `<span class="badge-admin">admin</span>` : '';
           const banBadgeHtml = targetUserData.banned === true ? `<span class="badge-banned">banned</span>` : '';
           
-          const rawBio = targetUserData.bio || "This user hasn't added a bio yet suspension parameters.";
+          const rawBio = targetUserData.bio || "This user hasn't added a bio yet.";
           const convertedBioHtml = marked.parse(rawBio);
           
           let socialLinksHtml = "";
@@ -422,27 +436,59 @@
               editActionHtml += `</div>`;
           }
 
-          profileContainer.innerHTML = `
-              <div class="profile-view-card">
-                  <div class="profile-meta">
-                      <span>User Profile</span>
-                      ${adminBadgeHtml}
-                      ${banBadgeHtml}
-                      <span>•</span>
-                      <span>Joined ${joinedDate}</span>
-                  </div>
-                  <h1 class="profile-title">u/${targetUserData.username}</h1>
-                  ${editActionHtml}
-                  <div class="profile-bio-content" id="bioContentContainer">
-                      <div>${convertedBioHtml}</div>
-                      ${socialLinksHtml}
-                  </div>
+          const fallbackAvatar = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="%23787c7e"><rect width="64" height="64" fill="%23f6f7f8"/><circle cx="32" cy="24" r="12"/><path d="M10 54c0-11 10-18 22-18s22 7 22 18z"/></svg>`;
+          const currentPfpSrc = targetUserData.pfp || fallbackAvatar;
+
+          // Clear layout container to guarantee clean structure rendering
+          profileContainer.innerHTML = "";
+
+          // Safe Workaround: Create layout card wrapper natively
+          const viewCard = document.createElement("div");
+          viewCard.className = "profile-view-card";
+
+          // Construct Header identity blocks natively
+          const identityBlock = document.createElement("div");
+          identityBlock.className = "profile-identity-block";
+
+          const profileImg = document.createElement("img");
+          profileImg.className = "profile-avatar";
+          profileImg.src = currentPfpSrc;
+          profileImg.alt = "pfp";
+
+          const metaTextBlock = document.createElement("div");
+          metaTextBlock.innerHTML = `
+              <div class="profile-meta">
+                  <span>User Profile</span>
+                  ${adminBadgeHtml}
+                  ${banBadgeHtml}
+                  <span>•</span>
+                  <span>Joined ${joinedDate}</span>
               </div>
+              <h1 class="profile-title">u/${escapeHTML(targetUserData.username)}</h1>
           `;
+
+          identityBlock.appendChild(profileImg);
+          identityBlock.appendChild(metaTextBlock);
+          viewCard.appendChild(identityBlock);
+
+          // Append functional components cleanly
+          if (editActionHtml) {
+              const actionsContainer = document.createElement("div");
+              actionsContainer.innerHTML = editActionHtml;
+              viewCard.appendChild(actionsContainer.firstElementChild);
+          }
+
+          const bioContentContainer = document.createElement("div");
+          bioContentContainer.id = "bioContentContainer";
+          bioContentContainer.className = "profile-bio-content";
+          bioContentContainer.innerHTML = `<div>${convertedBioHtml}</div>${socialLinksHtml}`;
+          viewCard.appendChild(bioContentContainer);
+
+          profileContainer.appendChild(viewCard);
 
           if (canEdit) {
               document.getElementById("editProfileBtn").onclick = () => 
-                  toggleEditProfileForm(targetUserUid, targetUserData.bio || "", targetUserData.socialLinks || []);
+                  toggleEditProfileForm(targetUserUid, targetUserData.bio || "", targetUserData.socialLinks || [], targetUserData.pfp || "");
           }
 
           if (canBan) {
@@ -466,7 +512,7 @@
       }
   }
 
-  function toggleEditProfileForm(uid, currentBio, currentLinks) {
+  function toggleEditProfileForm(uid, currentBio, currentLinks, currentPfp) {
       const container = document.getElementById("bioContentContainer");
       
       if (document.getElementById("profileEditForm")) {
@@ -481,6 +527,9 @@
 
       container.innerHTML = `
           <form id="profileEditForm" class="edit-form">
+              <label style="font-size: 11px; font-weight: bold; color: #787c7e;">PROFILE PICTURE (SQUARE UPLOAD)</label>
+              <input type="file" id="editPfpFileInput" class="edit-input" accept="image/*" />
+              
               <label style="font-size: 11px; font-weight: bold; color: #787c7e;">BIO DESCRIPTION (MARKDOWN SUPPORTED)</label>
               <textarea id="editBioInput" class="edit-input edit-textarea" placeholder="Use **bold**, *italics*, u/username, or c/community...">${currentBio}</textarea>
               
@@ -518,6 +567,7 @@
       document.getElementById("profileEditForm").onsubmit = async (e) => {
           e.preventDefault();
           const nextBio = document.getElementById("editBioInput").value;
+          const fileInput = document.getElementById("editPfpFileInput");
           
           const labelInputs = formContainer.querySelectorAll(".link-label");
           const urlInputs = formContainer.querySelectorAll(".link-url");
@@ -531,14 +581,58 @@
               }
           }
 
+          let finalBase64Pfp = currentPfp;
+
+          if (fileInput.files && fileInput.files[0]) {
+              try {
+                  finalBase64Pfp = await processAndCropToSquareBase64(fileInput.files[0]);
+              } catch (fileErr) {
+                  alert("Image structural scaling error: " + fileErr.message);
+                  return;
+              }
+          }
+
           try {
               await update(ref(rtdb, `users/${uid}`), {
                   bio: nextBio,
-                  socialLinks: updatedLinksArray
+                  socialLinks: updatedLinksArray,
+                  pfp: finalBase64Pfp
               });
               fetchUserProfile();
           } catch (err) { alert(err.message); }
       };
+  }
+
+  function processAndCropToSquareBase64(file) {
+      return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+              const img = new Image();
+              img.onload = () => {
+                  const canvas = document.createElement("canvas");
+                  const size = 150;
+                  canvas.width = size;
+                  canvas.height = size;
+                  const ctx = canvas.getContext("2d");
+
+                  let srcX = 0, srcY = 0, srcWidth = img.width, srcHeight = img.height;
+                  if (img.width > img.height) {
+                      srcWidth = img.height;
+                      srcX = (img.width - img.height) / 2;
+                  } else if (img.height > img.width) {
+                      srcHeight = img.width;
+                      srcY = (img.height - img.width) / 2;
+                  }
+
+                  ctx.drawImage(img, srcX, srcY, srcWidth, srcHeight, 0, 0, size, size);
+                  resolve(canvas.toDataURL("image/jpeg", 0.85));
+              };
+              img.onerror = () => reject(new Error("Failed to parse image file."));
+              img.src = event.target.result;
+          };
+          reader.onerror = () => reject(new Error("Failed to read file buffer."));
+          reader.readAsDataURL(file);
+      });
   }
 
   function escapeHTML(str) {
@@ -554,7 +648,7 @@
   import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyAyKbmWh1MZJiwSQ5DVlmt7Lgz9e7oY82A",
+    apiKey: "AIzaSyAyKbmWh1MZJiwSQ5DVmt7Lgz9e7oY82A",
     authDomain: "new-chatter-68eb4.firebaseapp.com",
     projectId: "new-chatter-68eb4",
     storageBucket: "new-chatter-68eb4.firebasestorage.app",
