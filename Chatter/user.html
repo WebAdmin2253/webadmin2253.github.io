@@ -176,6 +176,16 @@
     .profile-bio-content h1, .profile-bio-content h2, .profile-bio-content h3 { margin: 12px 0 6px 0; font-size: 1.2rem; }
     .profile-bio-content ul, .profile-bio-content ol { margin-left: 20px; margin-bottom: 10px; }
     
+    /* BIO IMAGE BOUNDS */
+    .profile-bio-content img {
+        max-width: 100%;
+        max-height: 350px;
+        border-radius: 6px;
+        margin-top: 8px;
+        display: block;
+        object-fit: contain;
+    }
+    
     /* Inline Mention Styles */
     .profile-bio-content a.mention-link {
         color: #ff0000;
@@ -446,19 +456,15 @@
           const fallbackAvatar = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="%23787c7e"><rect width="64" height="64" fill="%23f6f7f8"/><circle cx="32" cy="24" r="12"/><path d="M10 54c0-11 10-18 22-18s22 7 22 18z"/></svg>`;
           const currentPfpSrc = targetUserData.pfp || fallbackAvatar;
 
-          // Determine name presentation layout parameters
           const displayName = targetUserData.displayName ? targetUserData.displayName.trim() : "";
           const profileMainHeading = displayName ? displayName : `u/${targetUserData.username}`;
           const profileSubHeading = displayName ? `u/${targetUserData.username}` : "";
 
-          // Clear layout container to guarantee clean structure rendering
           profileContainer.innerHTML = "";
 
-          // Create layout card wrapper natively
           const viewCard = document.createElement("div");
           viewCard.className = "profile-view-card";
 
-          // Construct Header identity blocks natively
           const identityBlock = document.createElement("div");
           identityBlock.className = "profile-identity-block";
 
@@ -484,7 +490,6 @@
           identityBlock.appendChild(metaTextBlock);
           viewCard.appendChild(identityBlock);
 
-          // Append functional components cleanly
           if (editActionHtml) {
               const actionsContainer = document.createElement("div");
               actionsContainer.innerHTML = editActionHtml;
@@ -546,8 +551,8 @@
               <label style="font-size: 11px; font-weight: bold; color: #787c7e;">PROFILE PICTURE (SQUARE UPLOAD)</label>
               <input type="file" id="editPfpFileInput" class="edit-input" accept="image/*" />
               
-              <label style="font-size: 11px; font-weight: bold; color: #787c7e;">BIO DESCRIPTION (MARKDOWN SUPPORTED)</label>
-              <textarea id="editBioInput" class="edit-input edit-textarea" placeholder="Use **bold**, *italics*, u/username, or c/community...">${currentBio}</textarea>
+              <label style="font-size: 11px; font-weight: bold; color: #787c7e;">BIO DESCRIPTION (MARKDOWN & IMAGES SUPPORTED)</label>
+              <textarea id="editBioInput" class="edit-input edit-textarea" placeholder="Use **bold**, *italics*, ![Alt text](image_url), u/username, or c/community...">${currentBio}</textarea>
               
               <label style="font-size: 11px; font-weight: bold; color: #787c7e;">SOCIAL MEDIA LINKS</label>
               <div id="socialLinksInputsContainer"></div>
