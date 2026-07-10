@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatter - Home Feed</title>
+  <style>
+    /* RESET & BASE STYLES */
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: #ffffff;
+        color: #1a1a1b;
+        overflow-x: hidden;
+    }
+
+    /* TOOLBAR NAVBAR */
+    .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 58px;
+        background: white;
+        border-bottom: 1px solid #edeff1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        z-index: 100;
+    }
+    .nav-left {
+        display: flex;
+        align-items: center;
+    }
+    .nav-logo {
+        height: 34px;
+        cursor: pointer;
+    }
+    .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .welcome-text {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #4a4a4a;
+    }
+    
+    /* GLOBAL ANNOUNCEMENT BANNER */
+    .global-announcement-banner {
+        background-color: #ffe5e5;
+        border: 1px solid #ffb3b3;
+        color: #cc0000;
+        padding: 12px 20px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        display: none;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* COMMUNITY DESCRIPTION BOX */
+    .community-description-box {
+        background-color: #f6f7f8;
+        border: 1px solid #edeff1;
+        border-radius: 6px;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        color: #575757;
+        line-height: 20px;
+        display: none;
+    }
+
+    /* BUTTONS */
+    .btn {
+        font-size: 14px;
+        font-weight: 700;
+        padding: 8px 20px;
+        border-radius: 9999px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid transparent;
+        transition: background 0.2s, color 0.2s;
+    }
+    .btn-outline {
+        border-color: #ff0000;
+        color: #ff0000;
+        background: transparent;
+    }
+    .btn-outline:hover {
+        background: rgba(255, 0, 0, 0.05);
+    }
+    .btn-filled {
+        background-color: #ff0000;
+        color: white;
+    }
+    .btn-filled:hover {
+        background-color: #cc0000;
+    }
+
+    /* MAIN CONTAINER INTERACTION (SIDEBAR LAYOUT) */
+    .main-layout {
+        max-width: 1000px;
+        margin: 86px auto 40px auto;
+        padding: 0 20px;
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 24px;
+    }
+
+    .main-layout > main {
+        min-width: 0; 
+    }
+
+    @media (max-width: 768px) {
+        .main-layout {
+            grid-template-columns: 1fr;
+        }
+        .sidebar {
+            order: -1;
+        }
+    }
+
+    /* POST CARD STYLING */
+    .post-card {
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 16px;
+        margin-bottom: 16px;
+        cursor: pointer;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        word-wrap: break-word;
+        word-break: break-word; 
+        overflow: hidden;
+    }
+    .post-card:hover {
+        border-color: #ff0000;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    .post-meta {
+        font-size: 12px;
+        color: #787c7e;
+        margin-bottom: 10px;
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .post-community {
+        color: #ff0000;
+        font-weight: 700;
+    }
+    .post-author {
+        color: #1a1a1b;
+        font-weight: 600;
+    }
+    .post-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a1a1b;
+        margin-bottom: 8px;
+        overflow-wrap: break-word;
+    }
+    .post-snippet {
+        font-size: 14px;
+        line-height: 21px;
+        color: #4a4a4a;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;  
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: normal;
+    }
+
+    /* SIDEBAR COMPONENT STYLES */
+    .sidebar {
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 16px;
+        align-self: start;
+        min-width: 0;
+    }
+    .sidebar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .btn-sidebar {
+        font-size: 11px;
+        padding: 4px 10px;
+        font-weight: 600;
+    }
+
+    /* TAB CONTROL STYLING */
+    .sidebar-tabs {
+        display: flex;
+        border-bottom: 1px solid #edeff1;
+        margin-bottom: 12px;
+        gap: 2px;
+    }
+    .tab-btn {
+        flex: 1;
+        background: none;
+        border: none;
+        padding: 8px 4px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #787c7e;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        text-align: center;
+        letter-spacing: 0.5px;
+    }
+    .tab-btn:hover {
+        color: #ff0000;
+    }
+    .tab-btn.active {
+        color: #ff0000;
+        border-bottom-color: #ff0000;
+    }
+
+    .tab-content {
+        display: none;
+    }
+    .tab-content.active {
+        display: block;
+    }
+
+    .search-box {
+        width: 100%;
+        border: 1px solid #edeff1;
+        border-radius: 4px;
+        padding: 8px 12px;
+        font-size: 13px;
+        outline: none;
+        margin-bottom: 14px;
+    }
+    .search-box:focus {
+        border-color: #ff0000;
+    }
+    
+    .list-wrapper {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-height: 280px;
+        overflow-y: auto;
+    }
+    .list-item a {
+        display: block;
+        padding: 6px 8px;
+        font-size: 14px;
+        color: #1a1a1b;
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .list-item a:hover {
+        background: rgba(255, 0, 0, 0.05);
+        color: #ff0000;
+    }
+    .list-item.active a {
+        background: #ff0000;
+        color: white;
+    }
+
+    .loader-text {
+        text-align: center;
+        padding: 40px;
+        color: #7c7c7c;
+    }
+    .sidebar-empty-text {
+        font-size: 13px;
+        color: #7c7c7c;
+        text-align: center;
+        padding: 12px 0;
+    }
+  </style>
+</head>
+<body>
+
+<header class="navbar">
+  <div class="nav-left">
+    <a href="home.html">
+        <img src="assets/CHATTER_PNG.png" alt="Chatter" class="nav-logo">
+    </a>
+  </div>
+  
+  <div class="nav-right">
+    <span id="welcomeUser" class="welcome-text" style="display: none;"></span>
+    <a class="btn btn-outline" href="dm.html" id="directMessagesBtn" style="display: none;">DMs</a>
+    <a class="btn btn-filled" href="new.html" id="createPostBtn" style="display: none;">Create Post</a>
+    <a class="btn btn-outline" href="#" id="authBtn">Jump In</a>
+  </div>
+</header>
+
+<div class="main-layout">
+  <main>
+    <div id="globalAnnouncement" class="global-announcement-banner">
+        <span id="bannerTextContent"></span>
+    </div>
+
+    <h2 id="feedHeader" style="font-size: 24px; margin-bottom: 16px; font-weight: 600;">c/all</h2>
+    
+    <div id="communityDescriptionBox" class="community-description-box"></div>
+
+    <div id="chatterFeed">
+      <div class="loader-text">Loading fresh feed entries...</div>
+    </div>
+  </main>
+
+  <aside class="sidebar">
+    <div class="sidebar-header">
+        <div style="display: flex; gap: 4px; width: 100%; justify-content: flex-end; flex-wrap: wrap;">
+            <button id="manageDescBtn" class="btn btn-outline btn-sidebar" style="display: none; border-color: #4a4a4a; color: #4a4a4a;">Edit Info</button>
+            <button id="manageBannerBtn" class="btn btn-filled btn-sidebar" style="display: none; background-color: #4a4a4a;">Banner</button>
+            <button id="createCommunityBtn" class="btn btn-outline btn-sidebar" style="display: none;">+ Create</button>
+        </div>
+    </div>
+
+    <div class="sidebar-tabs">
+      <button class="tab-btn active" data-tab="tab-communities">Communities</button>
+      <button class="tab-btn" data-tab="tab-users">Users</button>
+      <button class="tab-btn" data-tab="tab-posts">Posts</button>
+    </div>
+
+    <input type="text" id="sidebarSearch" class="search-box" placeholder="Filter current view...">
+
+    <div id="tab-communities" class="tab-content active">
+      <ul class="list-wrapper" id="communityList">
+        <li class="list-item active" id="item-all"><a href="home.html">c/all</a></li>
+      </ul>
+    </div>
+
+    <div id="tab-users" class="tab-content">
+      <ul class="list-wrapper" id="userList">
+        <div class="sidebar-empty-text">Loading members...</div>
+      </ul>
+    </div>
+
+    <div id="tab-posts" class="tab-content">
+      <ul class="list-wrapper" id="postIndexList">
+        <div class="sidebar-empty-text">Loading post entries...</div>
+      </ul>
+    </div>
+  </aside>
+</div>
+
+<div style="text-align: center; margin: 40px 0 20px 0;">
+  <div id="google_translate_element"></div>
+</div>
+
+<footer class="footer" style="text-align: center; padding: 32px 24px; color: #7c7c7c; font-size: 12px; border-top: 1px solid #edeff1; margin-top: 40px;">
+  <p>Copyright (©) Birdie Works '26. All rights reserved.</p>
+</footer>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+}
+</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, query, orderByChild, onValue, set, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAyKbmWh1MZJiwSQ5DVlmt7Lgz9e7oY82A",
+    authDomain: "new-chatter-68eb4.firebaseapp.com",
+    projectId: "new-chatter-68eb4",
+    storageBucket: "new-chatter-68eb4.firebasestorage.app",
+    messagingSenderId: "253944755091",
+    appId: "1:253944755091:web:c7891e34d97e414f9b6e66",
+    databaseURL: "https://new-chatter-68eb4-default-rtdb.firebaseio.com"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const rtdb = getDatabase(app);
+
+  const currentUserJson = localStorage.getItem("currentUser");
+  let currentUser = null;
+  let activeUserIsAdmin = false;
+
+  if (currentUserJson) {
+    try { currentUser = JSON.parse(currentUserJson); } catch (e) { console.error(e); }
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const activeCommunity = urlParams.get('c')?.toLowerCase() || null;
+  const feedHeader = document.getElementById("feedHeader");
+
+  const welcomeUser = document.getElementById("welcomeUser");
+  const authBtn = document.getElementById("authBtn");
+  const createPostBtn = document.getElementById("createPostBtn");
+  const directMessagesBtn = document.getElementById("directMessagesBtn");
+  const createCommunityBtn = document.getElementById("createCommunityBtn");
+  const manageBannerBtn = document.getElementById("manageBannerBtn");
+  const manageDescBtn = document.getElementById("manageDescBtn");
+  const communityDescriptionBox = document.getElementById("communityDescriptionBox");
+  const activeUsername = currentUser?.username || null;
+
+  if (activeUsername) {
+      welcomeUser.textContent = `u/${activeUsername}`;
+      welcomeUser.style.display = "inline";
+      createPostBtn.style.display = "inline-flex";
+      directMessagesBtn.style.display = "inline-flex";
+      createCommunityBtn.style.display = "inline-flex";
+      authBtn.textContent = "Log Out";
+      authBtn.onclick = (e) => {
+          e.preventDefault();
+          localStorage.removeItem("currentUser");
+          window.location.reload();
+      };
+      checkAdminStatus(activeUsername);
+  } else {
+      authBtn.textContent = "Log In";
+      authBtn.href = "login.html";
+      createPostBtn.style.display = "none";
+      directMessagesBtn.style.display = "none";
+      createCommunityBtn.style.display = "none";
+      welcomeUser.style.display = "none";
+  }
+
+  async function checkAdminStatus(username) {
+      try {
+          const usersRef = ref(rtdb, "users");
+          const snap = await get(usersRef);
+          if (snap.exists()) {
+              snap.forEach((userChild) => {
+                  const userData = userChild.val();
+                  if (userData.username && userData.username.toLowerCase() === username.toLowerCase()) {
+                      if (userData.admin === true) {
+                          activeUserIsAdmin = true;
+                          manageBannerBtn.style.display = "inline-flex";
+                          manageBannerBtn.style.color = "white";
+                          
+                          // Only allow editing descriptions if we are in a specific sub-community view
+                          if (activeCommunity) {
+                              manageDescBtn.style.display = "inline-flex";
+                          }
+                      }
+                  }
+              });
+          }
+      } catch (e) { console.error(e); }
+  }
+
+  // Handle Community Descriptions Dynamic Loading
+  if (activeCommunity) {
+      const currentCommRef = ref(rtdb, `communities/${activeCommunity}`);
+      onValue(currentCommRef, (snapshot) => {
+          if (snapshot.exists()) {
+              const commData = snapshot.val();
+              if (commData.description && commData.description.trim().length > 0) {
+                  communityDescriptionBox.textContent = commData.description;
+                  communityDescriptionBox.style.display = "block";
+              } else {
+                  communityDescriptionBox.style.display = "none";
+              }
+          }
+      });
+  }
+
+  // Manage Community Description Button Action
+  manageDescBtn.onclick = async () => {
+      if (!activeUserIsAdmin || !activeCommunity) return;
+      try {
+          const commTargetRef = ref(rtdb, `communities/${activeCommunity}`);
+          const currentSnap = await get(commTargetRef);
+          const currentData = currentSnap.exists() ? currentSnap.val() : {};
+          
+          const newDesc = prompt(`Enter a description summary for c/${activeCommunity}:`, currentData.description || "");
+          if (newDesc !== null) {
+              await update(commTargetRef, { description: newDesc.trim() });
+              alert("Community description updated successfully!");
+          }
+      } catch (e) {
+          alert("Failed to save layout configuration: " + e.message);
+      }
+  };
+
+  const bannerSettingsRef = ref(rtdb, 'site_settings/banner');
+  onValue(bannerSettingsRef, (snapshot) => {
+      const bannerDOM = document.getElementById("globalAnnouncement");
+      const textDOM = document.getElementById("bannerTextContent");
+      
+      if (snapshot.exists()) {
+          const bannerData = snapshot.val();
+          if (bannerData.visible && bannerData.text.trim().length > 0) {
+              textDOM.textContent = bannerData.text;
+              bannerDOM.style.display = "flex";
+              return;
+          }
+      }
+      bannerDOM.style.display = "none";
+  });
+
+  manageBannerBtn.onclick = async () => {
+      if (!activeUserIsAdmin) return;
+      try {
+          const currentSnap = await get(bannerSettingsRef);
+          const currentData = currentSnap.exists() ? currentSnap.val() : { text: "", visible: false };
+          const actionSelection = prompt("Type 'text' to change banner content, 'toggle' to turn it on/off, or 'cancel':").trim().toLowerCase();
+          
+          if (actionSelection === 'text') {
+              const textInput = prompt("Enter site-wide banner text:", currentData.text || "");
+              if (textInput !== null) {
+                  await update(bannerSettingsRef, { text: textInput.trim() });
+              }
+          } else if (actionSelection === 'toggle') {
+              const nextVisibility = !currentData.visible;
+              await update(bannerSettingsRef, { visible: nextVisibility });
+              alert(`Banner visibility toggled to: ${nextVisibility}`);
+          }
+      } catch (e) {
+          alert("Failed to modify configuration: " + e.message);
+      }
+  };
+
+  if (activeCommunity) {
+      feedHeader.textContent = `c/${activeCommunity}`;
+      document.getElementById("item-all").classList.remove("active");
+  }
+
+  createCommunityBtn.onclick = async () => {
+      const commPrompt = prompt("Enter a name for your new community (lowercase letters, numbers, hyphens only):");
+      if (!commPrompt) return;
+      const cleanCommName = commPrompt.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '-');
+
+      if (!cleanCommName || cleanCommName === "all") {
+          alert("Invalid community name syntax choice.");
+          return;
+      }
+
+      try {
+          const commTargetRef = ref(rtdb, `communities/${cleanCommName}`);
+          const verificationCheck = await get(commTargetRef);
+          if (verificationCheck.exists()) {
+              alert("This community directory already exists!");
+              return;
+          }
+          await set(commTargetRef, { name: cleanCommName, description: "" });
+          alert(`Successfully registered c/${cleanCommName}!`);
+          window.location.search = `?c=${cleanCommName}`;
+      } catch (error) {
+          console.error(error);
+          alert(`Failed to create community: ${error.message}`);
+      }
+  };
+
+  const feedElement = document.getElementById("chatterFeed");
+  const communityListElement = document.getElementById("communityList");
+  const userListElement = document.getElementById("userList");
+  const postIndexListElement = document.getElementById("postIndexList");
+  
+  const postsRef = ref(rtdb, 'posts');
+  const postsQuery = query(postsRef, orderByChild('timestamp'));
+  const communitiesRef = ref(rtdb, 'communities');
+  const usersTreeRef = ref(rtdb, "users");
+
+  // Stream Communities
+  onValue(communitiesRef, (commSnapshot) => {
+      const activeSidebarSet = new Set();
+      if (commSnapshot.exists()) {
+          commSnapshot.forEach((child) => {
+              activeSidebarSet.add(child.key.toLowerCase());
+          });
+      }
+      buildSidebarListing(activeSidebarSet);
+  });
+
+  // Stream Users Into Tab Directory View
+  onValue(usersTreeRef, (userSnapshot) => {
+      userListElement.innerHTML = "";
+      if (!userSnapshot.exists()) {
+          userListElement.innerHTML = `<div class="sidebar-empty-text">No network members.</div>`;
+          return;
+      }
+      const sortedUsers = [];
+      userSnapshot.forEach((child) => {
+          const u = child.val();
+          if (u.username) sortedUsers.push(u.username);
+      });
+      sortedUsers.sort();
+      sortedUsers.forEach(username => {
+          const li = document.createElement("li");
+          li.className = "list-item";
+          li.innerHTML = `<a href="user.html?u=${encodeURIComponent(username)}">u/${username}</a>`;
+          userListElement.appendChild(li);
+      });
+  });
+
+  // Stream Posts and Build Main Feed + Sidebar Index
+  onValue(postsQuery, (snapshot) => {
+      feedElement.innerHTML = "";
+      postIndexListElement.innerHTML = "";
+      
+      if (!snapshot.exists()) {
+          feedElement.innerHTML = "<div class='loader-text'>Wow, such empty. Be the first to create a post!</div>";
+          postIndexListElement.innerHTML = `<div class="sidebar-empty-text">No posts published.</div>`;
+          return;
+      }
+
+      const rawPosts = [];
+      snapshot.forEach((childSnapshot) => {
+          const key = childSnapshot.key;
+          const val = childSnapshot.val();
+          if (!val.id) val.id = key;
+          val.community = val.community ? val.community.toLowerCase().trim() : "all";
+          rawPosts.push(val);
+      });
+
+      rawPosts.reverse();
+
+      // Populate Posts Tab Index
+      rawPosts.forEach(p => {
+          const li = document.createElement("li");
+          li.className = "list-item";
+          li.innerHTML = `<a href="post.html?pid=${p.id}">${escapeHTML(p.title || "Untitled")}</a>`;
+          postIndexListElement.appendChild(li);
+      });
+
+      const filteredPosts = activeCommunity 
+          ? rawPosts.filter(p => p.community === activeCommunity) 
+          : rawPosts;
+
+      if(filteredPosts.length === 0) {
+          feedElement.innerHTML = `<div class='loader-text'>No posts found inside c/${activeCommunity} yet.</div>`;
+          return;
+      }
+
+      filteredPosts.forEach((data) => {
+          const postDate = data.timestamp ? new Date(data.timestamp).toLocaleDateString() : "Just now";
+          const postCard = document.createElement("div");
+          postCard.className = "post-card";
+          postCard.innerHTML = `
+              <div class="post-meta">
+                  <span class="post-community">c/${data.community || "all"}</span>
+                  <span>•</span>
+                  <span>Posted by</span>
+                  <span class="post-author">u/${data.username || "anonymous"}</span>
+                  <span>•</span>
+                  <span>${postDate}</span>
+              </div>
+              <h3 class="post-title">${escapeHTML(data.title || "Untitled Post")}</h3>
+              <div class="post-snippet">${escapeHTML(data.content || "")}</div>
+          `;
+          postCard.onclick = () => { window.location.href = `post.html?pid=${data.id}`; };
+          feedElement.appendChild(postCard);
+      });
+  });
+
+  function buildSidebarListing(communitiesSet) {
+      const items = communityListElement.querySelectorAll('.list-item:not(#item-all)');
+      items.forEach(el => el.remove());
+
+      const orderedList = Array.from(communitiesSet).sort();
+      orderedList.forEach(community => {
+          const li = document.createElement("li");
+          li.className = "list-item";
+          if(activeCommunity === community) {
+              li.classList.add("active");
+          }
+          li.innerHTML = `<a href="home.html?c=${encodeURIComponent(community)}">c/${community}</a>`;
+          communityListElement.appendChild(li);
+      });
+  }
+
+  // TAB ACTION FUNCTIONALITY
+  const tabButtons = document.querySelectorAll(".tab-btn");
+  const tabContents = document.querySelectorAll(".tab-content");
+  const sidebarSearch = document.getElementById("sidebarSearch");
+
+  tabButtons.forEach(btn => {
+      btn.onclick = () => {
+          tabButtons.forEach(b => b.classList.remove("active"));
+          tabContents.forEach(c => c.classList.remove("active"));
+
+          btn.classList.add("active");
+          const targetTab = document.getElementById(btn.getAttribute("data-tab"));
+          targetTab.classList.add("active");
+          
+          sidebarSearch.value = "";
+          triggerSearchFilter();
+      };
+  });
+
+  sidebarSearch.addEventListener("input", triggerSearchFilter);
+
+  function triggerSearchFilter() {
+      const queryText = sidebarSearch.value.toLowerCase().trim();
+      const currentActiveTab = document.querySelector(".tab-content.active");
+      const listItems = currentActiveTab.querySelectorAll('.list-item');
+
+      listItems.forEach(item => {
+          const text = item.textContent.toLowerCase();
+          if (text.includes(queryText)) {
+              item.style.display = "block";
+          } else {
+              item.style.display = "none";
+          }
+      });
+  }
+
+  function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+  }
+</script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAyKbmWh1MZJiwSQ5DVlmt7Lgz9e7oY82A",
+    authDomain: "new-chatter-68eb4.firebaseapp.com",
+    projectId: "new-chatter-68eb4",
+    storageBucket: "new-chatter-68eb4.firebasestorage.app",
+    messagingSenderId: "253944755091",
+    appId: "1:253944755091:web:c7891e34d97e414f9b6e66",
+    databaseURL: "https://new-chatter-68eb4-default-rtdb.firebaseio.com"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const rtdb = getDatabase(app);
+
+  async function enforceBanRestrictions() {
+      const currentUserJson = localStorage.getItem("currentUser");
+      if (!currentUserJson) return;
+
+      try {
+          const activeUser = JSON.parse(currentUserJson);
+          if (!activeUser || !activeUser.username) return;
+
+          if (window.location.pathname.endsWith("banned.html")) return;
+
+          const usersRef = ref(rtdb, "users");
+          const snap = await get(usersRef);
+
+          if (snap.exists()) {
+              snap.forEach((child) => {
+                  const uData = child.val();
+                  if (uData.username && uData.username.toLowerCase() === activeUser.username.toLowerCase()) {
+                      if (uData.banned === true) {
+                          window.location.href = "banned.html";
+                      }
+                  }
+              });
+          }
+      } catch (e) {
+          console.error("Restriction check error:", e);
+      }
+  }
+
+  enforceBanRestrictions();
+</script>
+</body>
+</html>

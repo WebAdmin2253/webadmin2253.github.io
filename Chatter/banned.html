@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatter - Account Suspended</title>
+  <style>
+    /* RESET & BASE STYLES */
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: #ffffff;
+        color: #1a1a1b;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    /* NAVBAR STYLES */
+    .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        background: white;
+        border-bottom: 1px solid #edeff1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        z-index: 100;
+    }
+    .nav-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .nav-logo {
+        height: 32px;
+        cursor: pointer;
+    }
+
+    /* CONTAINER SETUP */
+    .app-container {
+        max-width: 520px;
+        margin: 140px auto 40px auto;
+        padding: 0 16px;
+        width: 100%;
+    }
+
+    .error-card {
+        background: white;
+        padding: 40px 24px;
+        border: 1px solid #edeff1;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .error-icon {
+        font-size: 48px;
+        color: #ff0000;
+        margin-bottom: 16px;
+    }
+
+    .error-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 14px;
+        color: #1a1a1b;
+    }
+
+    .error-message {
+        font-size: 15px;
+        line-height: 1.6;
+        color: #787c7e;
+        margin-bottom: 24px;
+    }
+
+    /* BUTTONS */
+    .btn {
+        font-size: 14px;
+        font-weight: 700;
+        padding: 10px 24px;
+        border-radius: 9999px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid transparent;
+        transition: background 0.2s, color 0.2s;
+    }
+    .btn-filled {
+        background-color: #ff0000;
+        color: white;
+    }
+    .btn-filled:hover {
+        background-color: #cc0000;
+    }
+  </style>
+</head>
+<body>
+
+<header class="navbar">
+  <div class="nav-left">
+    <a href="home.html">
+        <img src="assets/CHATTER_PNG.png" alt="Chatter" class="nav-logo">
+    </a>
+  </div>
+</header>
+
+<main class="app-container">
+    <div class="error-card">
+        <h1 class="error-title">We're sorry.</h1>
+        <p class="error-message">
+            Your profile has been suspended by a site administrator due to a violation of community guidelines. You no longer have permissions to post, reply, or update profile configurations.
+			<br /><br />
+			You may file an appeal with the button below. Until your account access is restored, you may not access Chatter.
+        </p>
+		<a class="btn btn-filled" href="mailto:b1naryn1nja@outlook.com">Appeal</a>
+    </div>
+</main>
+
+</body>
+</html>

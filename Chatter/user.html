@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatter - View Profile</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    /* RESET & BASE STYLES */
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: #ffffff;
+        color: #1a1a1b;
+    }
+
+    /* NAVBAR STYLES */
+    .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        background: white;
+        border-bottom: 1px solid #edeff1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        z-index: 100;
+    }
+    .nav-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .nav-logo {
+        height: 32px;
+        cursor: pointer;
+    }
+    .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .welcome-text {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #4a4a4a;
+    }
+
+    /* BUTTONS */
+    .btn {
+        font-size: 14px;
+        font-weight: 700;
+        padding: 6px 16px;
+        border-radius: 9999px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid transparent;
+        transition: background 0.2s, color 0.2s;
+    }
+    .btn-outline {
+        border-color: #ff0000;
+        color: #ff0000;
+        background: transparent;
+    }
+    .btn-outline:hover {
+        background: rgba(255, 0, 0, 0.05);
+    }
+    .btn-filled {
+        background-color: #ff0000;
+        color: white;
+    }
+    .btn-filled:hover {
+        background-color: #cc0000;
+    }
+
+    /* CONTAINER SETUP MATCHING POST.HTML */
+    .app-container {
+        max-width: 640px;
+        margin: 86px auto 40px auto;
+        padding: 0 16px;
+    }
+
+    .profile-layout-wrapper {
+        display: flex;
+        gap: 12px;
+    }
+
+    .profile-view-card {
+        background: white;
+        padding: 20px 20px 20px 0;
+        border-bottom: 1px solid #edeff1;
+        flex: 1;
+    }
+    .profile-meta {
+        font-size: 12px;
+        color: #787c7e;
+        margin-bottom: 12px;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+    .badge-admin {
+        background-color: #ff0000;
+        color: white;
+        font-size: 10px;
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+    .badge-banned {
+        background-color: #000000;
+        color: white;
+        font-size: 10px;
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+    .profile-title {
+        font-size: 26px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: #1a1a1b;
+    }
+    .profile-actions {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+        align-items: center;
+    }
+
+    /* BIO AND DETAILS RENDERING */
+    .profile-bio-content {
+        font-size: 16px;
+        line-height: 1.6;
+        color: #1a1a1b;
+        margin-bottom: 20px;
+    }
+    .profile-bio-content p { margin-bottom: 10px; }
+    .profile-bio-content h1, .profile-bio-content h2, .profile-bio-content h3 { margin: 12px 0 6px 0; font-size: 1.2rem; }
+    .profile-bio-content ul, .profile-bio-content ol { margin-left: 20px; margin-bottom: 10px; }
+    
+    /* Inline Mention Styles */
+    .profile-bio-content a.mention-link {
+        color: #ff0000;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .profile-bio-content a.mention-link:hover {
+        text-decoration: underline;
+    }
+
+    .links-container {
+        margin-top: 16px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .social-link {
+        color: #ff0000;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        border: 1px solid #ff0000;
+        padding: 6px 14px;
+        border-radius: 9999px;
+        transition: background 0.2s;
+    }
+    .social-link:hover {
+        background: rgba(255, 0, 0, 0.05);
+    }
+
+    /* FORM MANAGER FOR EDITS */
+    .edit-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 16px;
+    }
+    .edit-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #edeff1;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 14px;
+        outline: none;
+    }
+    .edit-input:focus {
+        border-color: #ff0000;
+    }
+    .edit-textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .social-input-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .action-link {
+        font-size: 12px;
+        color: #878a8c;
+        background: none;
+        border: none;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .action-link:hover {
+        color: #ff0000;
+    }
+    .action-link.danger-link {
+        color: #a30000;
+    }
+    .action-link.danger-link:hover {
+        color: #ff0000;
+    }
+
+    .loader-text {
+        text-align: center;
+        padding: 40px;
+        color: #7c7c7c;
+    }
+  </style>
+</head>
+<body>
+
+<header class="navbar">
+  <div class="nav-left">
+    <a href="home.html">
+        <img src="assets/CHATTER_PNG.png" alt="Chatter" class="nav-logo">
+    </a>
+  </div>
+  
+  <div class="nav-right">
+    <span id="welcomeUser" class="welcome-text" style="display: none;"></span>
+    <a class="btn btn-outline" href="home.html">Back to Feed</a>
+  </div>
+</header>
+
+<main class="app-container">
+    <div class="profile-layout-wrapper">
+        <div id="profileContainer" style="width: 100%;">
+            <div class="loader-text">Loading member parameters...</div>
+        </div>
+    </div>
+</main>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAyKbmWh1MZJiwSQ5DVlmt7Lgz9e7oY82A",
+    authDomain: "new-chatter-68eb4.firebaseapp.com",
+    projectId: "new-chatter-68eb4",
+    storageBucket: "new-chatter-68eb4.firebasestorage.app",
+    messagingSenderId: "253944755091",
+    appId: "1:253944755091:web:c7891e34d97e414f9b6e66",
+    databaseURL: "https://new-chatter-68eb4-default-rtdb.firebaseio.com"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const rtdb = getDatabase(app);
+
+  const currentUserJson = localStorage.getItem("currentUser");
+  let activeUser = null;
+  let currentActiveUserIsAdmin = false;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetUsername = urlParams.get('u');
+
+  const profileContainer = document.getElementById("profileContainer");
+
+  // Setup Marked Markdown Parsing Options
+  marked.setOptions({
+    sanitize: true,
+    breaks: true
+  });
+
+  // Custom Extension to automatically transform u/ and c/ strings into hyperlinks
+  const mentionExtension = {
+    name: 'mention',
+    level: 'inline',
+    start(src) { return src.match(/[uc]\//i)?.index; },
+    tokenizer(src, tokens) {
+      const rule = /^([uc]\/)([a-zA-Z0-9_\-]+)/i;
+      const match = rule.exec(src);
+      if (match) {
+        return {
+          type: 'mention',
+          raw: match[0],
+          prefix: match[1].toLowerCase(),
+          name: match[2]
+        };
+      }
+    },
+    renderer(token) {
+      if (token.prefix === 'u/') {
+        return `<a class="mention-link" href="user.html?u=${encodeURIComponent(token.name)}">u/${escapeHTML(token.name)}</a>`;
+      } else if (token.prefix === 'c/') {
+        return `<a class="mention-link" href="home.html?c=${encodeURIComponent(token.name)}">c/${escapeHTML(token.name)}</a>`;
+      }
+      return token.raw;
+    }
+  };
+  marked.use({ extensions: [mentionExtension] });
+
+  async function initializeFlow() {
+      if (currentUserJson) {
+          try {
+              activeUser = JSON.parse(currentUserJson);
+              if (activeUser?.username) {
+                  const welcomeUser = document.getElementById("welcomeUser");
+                  welcomeUser.textContent = `u/${activeUser.username}`;
+                  welcomeUser.style.display = "inline";
+                  
+                  await checkActiveAdminStatus(activeUser.username);
+              }
+          } catch (e) { console.error(e); }
+      }
+
+      if (!targetUsername) {
+          profileContainer.innerHTML = "<div class='loader-text'>Error: No user parameter specified in URL.</div>";
+      } else {
+          fetchUserProfile();
+      }
+  }
+
+  async function checkActiveAdminStatus(username) {
+      try {
+          const usersRef = ref(rtdb, "users");
+          const snap = await get(usersRef);
+          if (snap.exists()) {
+              snap.forEach((child) => {
+                  const uData = child.val();
+                  if (uData.username && uData.username.toLowerCase() === username.toLowerCase()) {
+                      if (uData.admin === true) {
+                          currentActiveUserIsAdmin = true;
+                      }
+                  }
+              });
+          }
+      } catch (e) { console.error(e); }
+  }
+
+  async function fetchUserProfile() {
+      try {
+          const usersRef = ref(rtdb, "users");
+          const snap = await get(usersRef);
+          let targetUserUid = null;
+          let targetUserData = null;
+
+          if (snap.exists()) {
+              snap.forEach((child) => {
+                  const uData = child.val();
+                  if (uData.username && uData.username.toLowerCase() === targetUsername.toLowerCase()) {
+                      targetUserUid = child.key;
+                      targetUserData = uData;
+                  }
+              });
+          }
+
+          if (!targetUserData) {
+              profileContainer.innerHTML = "<div class='loader-text'>User profile node not found.</div>";
+              return;
+          }
+
+          const joinedDate = targetUserData.createdAt ? new Date(targetUserData.createdAt).toLocaleDateString() : "Early Member";
+          const adminBadgeHtml = targetUserData.admin === true ? `<span class="badge-admin">admin</span>` : '';
+          const banBadgeHtml = targetUserData.banned === true ? `<span class="badge-banned">banned</span>` : '';
+          
+          const rawBio = targetUserData.bio || "This user hasn't added a bio yet suspension parameters.";
+          const convertedBioHtml = marked.parse(rawBio);
+          
+          let socialLinksHtml = "";
+          if (targetUserData.socialLinks && Array.isArray(targetUserData.socialLinks)) {
+              const elements = targetUserData.socialLinks
+                  .filter(link => link && link.url)
+                  .map(link => `<a href="${escapeHTML(link.url)}" target="_blank" class="social-link">${escapeHTML(link.label || 'Link')}</a>`)
+                  .join("");
+              if (elements) {
+                  socialLinksHtml = `<div class="links-container">${elements}</div>`;
+              }
+          } else if (targetUserData.socialLink) {
+              socialLinksHtml = `
+                  <div class="links-container">
+                      <a href="${escapeHTML(targetUserData.socialLink)}" target="_blank" class="social-link">Social Link</a>
+                  </div>
+              `;
+          }
+
+          const isOwnProfile = activeUser && activeUser.uid === targetUserUid;
+          const canEdit = isOwnProfile || currentActiveUserIsAdmin;
+          const canBan = currentActiveUserIsAdmin && !isOwnProfile;
+
+          let editActionHtml = "";
+          if (canEdit || canBan) {
+              editActionHtml = `<div class="profile-actions">`;
+              if (canEdit) {
+                  editActionHtml += `<button class="action-link" id="editProfileBtn">Edit Profile Setup</button>`;
+              }
+              if (canBan) {
+                  const banBtnLabel = targetUserData.banned === true ? "Unban Account" : "Ban Account";
+                  editActionHtml += `<button class="action-link danger-link" id="banProfileBtn">${banBtnLabel}</button>`;
+              }
+              editActionHtml += `</div>`;
+          }
+
+          profileContainer.innerHTML = `
+              <div class="profile-view-card">
+                  <div class="profile-meta">
+                      <span>User Profile</span>
+                      ${adminBadgeHtml}
+                      ${banBadgeHtml}
+                      <span>•</span>
+                      <span>Joined ${joinedDate}</span>
+                  </div>
+                  <h1 class="profile-title">u/${targetUserData.username}</h1>
+                  ${editActionHtml}
+                  <div class="profile-bio-content" id="bioContentContainer">
+                      <div>${convertedBioHtml}</div>
+                      ${socialLinksHtml}
+                  </div>
+              </div>
+          `;
+
+          if (canEdit) {
+              document.getElementById("editProfileBtn").onclick = () => 
+                  toggleEditProfileForm(targetUserUid, targetUserData.bio || "", targetUserData.socialLinks || []);
+          }
+
+          if (canBan) {
+              document.getElementById("banProfileBtn").onclick = async () => {
+                  const currentBanState = targetUserData.banned === true;
+                  const confirmation = confirm(`Are you sure you want to ${currentBanState ? 'unban' : 'ban'} u/${targetUserData.username}?`);
+                  if (!confirmation) return;
+
+                  try {
+                      await update(ref(rtdb, `users/${targetUserUid}`), {
+                          banned: !currentBanState
+                      });
+                      fetchUserProfile();
+                  } catch (err) { alert("Failed to modify execution status: " + err.message); }
+              };
+          }
+
+      } catch (error) {
+          console.error(error);
+          profileContainer.innerHTML = `<div class='loader-text'>Error fetching user parameters.</div>`;
+      }
+  }
+
+  function toggleEditProfileForm(uid, currentBio, currentLinks) {
+      const container = document.getElementById("bioContentContainer");
+      
+      if (document.getElementById("profileEditForm")) {
+          fetchUserProfile();
+          return;
+      }
+
+      let structuralLinks = Array.isArray(currentLinks) ? [...currentLinks] : [];
+      if (structuralLinks.length === 0) {
+          structuralLinks.push({ label: "", url: "" });
+      }
+
+      container.innerHTML = `
+          <form id="profileEditForm" class="edit-form">
+              <label style="font-size: 11px; font-weight: bold; color: #787c7e;">BIO DESCRIPTION (MARKDOWN SUPPORTED)</label>
+              <textarea id="editBioInput" class="edit-input edit-textarea" placeholder="Use **bold**, *italics*, u/username, or c/community...">${currentBio}</textarea>
+              
+              <label style="font-size: 11px; font-weight: bold; color: #787c7e;">SOCIAL MEDIA LINKS</label>
+              <div id="socialLinksInputsContainer"></div>
+              
+              <button type="button" class="action-link" id="addLinkRowBtn" style="color: #ff0000; align-self: flex-start; margin-bottom: 12px;">+ Add Another Link</button>
+              
+              <div style="display:flex; gap:8px; align-self:flex-end; margin-top:4px;">
+                  <button type="button" class="btn btn-outline" id="cancelProfileEdit">Cancel</button>
+                  <button type="submit" class="btn btn-filled">Save Profile</button>
+              </div>
+          </form>
+      `;
+
+      const formContainer = document.getElementById("socialLinksInputsContainer");
+
+      function injectLinkRow(label = "", url = "") {
+          const row = document.createElement("div");
+          row.className = "social-input-row";
+          row.innerHTML = `
+              <input type="text" placeholder="Label (e.g. Instagram)" class="edit-input link-label" value="${escapeHTML(label)}" style="flex: 1;">
+              <input type="url" placeholder="https://..." class="edit-input link-url" value="${escapeHTML(url)}" style="flex: 2;">
+              <button type="button" class="btn btn-outline remove-row-btn" style="padding: 0 12px; border-radius: 6px;">✕</button>
+          `;
+          row.querySelector(".remove-row-btn").onclick = () => row.remove();
+          formContainer.appendChild(row);
+      }
+
+      structuralLinks.forEach(link => injectLinkRow(link.label, link.url));
+
+      document.getElementById("addLinkRowBtn").onclick = () => injectLinkRow("", "");
+      document.getElementById("cancelProfileEdit").onclick = () => { fetchUserProfile(); };
+
+      document.getElementById("profileEditForm").onsubmit = async (e) => {
+          e.preventDefault();
+          const nextBio = document.getElementById("editBioInput").value;
+          
+          const labelInputs = formContainer.querySelectorAll(".link-label");
+          const urlInputs = formContainer.querySelectorAll(".link-url");
+          
+          const updatedLinksArray = [];
+          for (let i = 0; i < urlInputs.length; i++) {
+              const urlVal = urlInputs[i].value.trim();
+              const labelVal = labelInputs[i].value.trim() || "Link";
+              if (urlVal) {
+                  updatedLinksArray.push({ label: labelVal, url: urlVal });
+              }
+          }
+
+          try {
+              await update(ref(rtdb, `users/${uid}`), {
+                  bio: nextBio,
+                  socialLinks: updatedLinksArray
+              });
+              fetchUserProfile();
+          } catch (err) { alert(err.message); }
+      };
+  }
+
+  function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+  }
+
+  initializeFlow();
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAyKbmWh1MZJiwSQ5DVlmt7Lgz9e7oY82A",
+    authDomain: "new-chatter-68eb4.firebaseapp.com",
+    projectId: "new-chatter-68eb4",
+    storageBucket: "new-chatter-68eb4.firebasestorage.app",
+    messagingSenderId: "253944755091",
+    appId: "1:253944755091:web:c7891e34d97e414f9b6e66",
+    databaseURL: "https://new-chatter-68eb4-default-rtdb.firebaseio.com"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const rtdb = getDatabase(app);
+
+  async function enforceBanRestrictions() {
+      const currentUserJson = localStorage.getItem("currentUser");
+      if (!currentUserJson) return;
+
+      try {
+          const activeUser = JSON.parse(currentUserJson);
+          if (!activeUser || !activeUser.username) return;
+          if (window.location.pathname.endsWith("banned.html")) return;
+
+          const usersRef = ref(rtdb, "users");
+          const snap = await get(usersRef);
+
+          if (snap.exists()) {
+              snap.forEach((child) => {
+                  const uData = child.val();
+                  if (uData.username && uData.username.toLowerCase() === activeUser.username.toLowerCase()) {
+                      if (uData.banned === true) {
+                          window.location.href = "banned.html";
+                      }
+                  }
+              });
+          }
+      } catch (e) {
+          console.error("Restriction check error:", e);
+      }
+  }
+
+  enforceBanRestrictions();
+</script>
+</body>
+</html>

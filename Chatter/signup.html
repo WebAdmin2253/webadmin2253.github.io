@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="css/signin_login.css">
+</head>
+<body>
+
+<div class="box">
+    <h2 class="textcolorred">
+        Create a Chatter Account
+    </h2>
+
+    <input
+        type="text"
+        id="username"
+        placeholder="Username"
+    >
+
+    <input
+        type="email"
+        id="email"
+        placeholder="Email"
+    >
+
+    <input
+        type="password"
+        id="password"
+        placeholder="Password"
+    >
+
+    <button id="signupBtn">
+        Sign Up
+    </button>
+
+    <p>
+        Already have a Chatter account?
+        <a href="login.html">Login</a>
+    </p>
+</div>
+
+<script type="module">
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+    getAuth,
+    createUserWithEmailAndPassword
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+    getDatabase,
+    ref,
+    set
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAyKbmWh1MZJiwSQ5DVlmt7Lgz9e7oY82A",
+    authDomain: "new-chatter-68eb4.firebaseapp.com",
+    projectId: "new-chatter-68eb4",
+    storageBucket: "new-chatter-68eb4.firebasestorage.app",
+    messagingSenderId: "253944755091",
+    appId: "1:253944755091:web:c7891e34d97e414f9b6e66"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+//
+// =========================
+// SIGNUP LOGIC
+// =========================
+//
+const signupBtn = document.getElementById("signupBtn");
+
+signupBtn.addEventListener("click", async () => {
+    const username = document.getElementById("username").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!username || !email || !password) {
+        alert("Please fill in all fields.");
+        return;
+    }
+
+    signupBtn.disabled = true;
+    signupBtn.innerText = "Creating account...";
+
+    try {
+        // 1. Create Firebase Auth user
+        const userCredential = await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password
+        );
+
+        const user = userCredential.user;
+
+        if (!user || !user.uid) {
+            throw new Error("User creation failed.");
+        }
+
+        // 2. Save profile to database AFTER auth success
+        const profileData = {
+            username: username,
+            email: email,
+            role: "member",
+            createdAt: Date.now()
+        };
+
+        await set(
+            ref(db, "users/" + user.uid),
+            profileData
+        );
+
+        // 3. Local session
+        localStorage.setItem(
+            "currentUser",
+            JSON.stringify({
+                uid: user.uid,
+                username: username,
+                email: email,
+                role: "member"
+            })
+        );
+
+        // 4. Redirect
+        window.location.href = "home.html";
+
+    } catch (error) {
+        console.error(error);
+        alert(error.message);
+        signupBtn.disabled = false;
+        signupBtn.innerText = "Sign Up";
+    }
+});
+</script>
+
+</body>
+</html>
