@@ -121,7 +121,7 @@
     .profile-meta {
         font-size: 12px;
         color: #787c7e;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
         display: flex;
         gap: 6px;
         align-items: center;
@@ -150,6 +150,12 @@
         font-size: 26px;
         font-weight: 600;
         color: #1a1a1b;
+        line-height: 1.2;
+    }
+    .profile-subtitle {
+        font-size: 14px;
+        color: #787c7e;
+        margin-top: 2px;
     }
     .profile-actions {
         display: flex;
@@ -439,10 +445,15 @@
           const fallbackAvatar = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="%23787c7e"><rect width="64" height="64" fill="%23f6f7f8"/><circle cx="32" cy="24" r="12"/><path d="M10 54c0-11 10-18 22-18s22 7 22 18z"/></svg>`;
           const currentPfpSrc = targetUserData.pfp || fallbackAvatar;
 
+          // Determine name presentation layout parameters
+          const displayName = targetUserData.displayName ? targetUserData.displayName.trim() : "";
+          const profileMainHeading = displayName ? displayName : `u/${targetUserData.username}`;
+          const profileSubHeading = displayName ? `u/${targetUserData.username}` : "";
+
           // Clear layout container to guarantee clean structure rendering
           profileContainer.innerHTML = "";
 
-          // Safe Workaround: Create layout card wrapper natively
+          // Create layout card wrapper natively
           const viewCard = document.createElement("div");
           viewCard.className = "profile-view-card";
 
@@ -464,7 +475,8 @@
                   <span>•</span>
                   <span>Joined ${joinedDate}</span>
               </div>
-              <h1 class="profile-title">u/${escapeHTML(targetUserData.username)}</h1>
+              <h1 class="profile-title">${escapeHTML(profileMainHeading)}</h1>
+              ${profileSubHeading ? `<div class="profile-subtitle">${escapeHTML(profileSubHeading)}</div>` : ""}
           `;
 
           identityBlock.appendChild(profileImg);
@@ -488,7 +500,7 @@
 
           if (canEdit) {
               document.getElementById("editProfileBtn").onclick = () => 
-                  toggleEditProfileForm(targetUserUid, targetUserData.bio || "", targetUserData.socialLinks || [], targetUserData.pfp || "");
+                  toggleEditProfileForm(targetUserUid, targetUserData.displayName || "", targetUserData.bio || "", targetUserData.socialLinks || [], targetUserData.pfp || "");
           }
 
           if (canBan) {
@@ -512,7 +524,7 @@
       }
   }
 
-  function toggleEditProfileForm(uid, currentBio, currentLinks, currentPfp) {
+  function toggleEditProfileForm(uid, currentDisplayName, currentBio, currentLinks, currentPfp) {
       const container = document.getElementById("bioContentContainer");
       
       if (document.getElementById("profileEditForm")) {
@@ -527,6 +539,9 @@
 
       container.innerHTML = `
           <form id="profileEditForm" class="edit-form">
+              <label style="font-size: 11px; font-weight: bold; color: #787c7e;">DISPLAY NAME (PUBLIC NICKNAME)</label>
+              <input type="text" id="editDisplayNameInput" class="edit-input" placeholder="e.g. Alex Smith" value="${escapeHTML(currentDisplayName)}" maxlength="50" />
+
               <label style="font-size: 11px; font-weight: bold; color: #787c7e;">PROFILE PICTURE (SQUARE UPLOAD)</label>
               <input type="file" id="editPfpFileInput" class="edit-input" accept="image/*" />
               
@@ -566,6 +581,7 @@
 
       document.getElementById("profileEditForm").onsubmit = async (e) => {
           e.preventDefault();
+          const nextDisplayName = document.getElementById("editDisplayNameInput").value.trim();
           const nextBio = document.getElementById("editBioInput").value;
           const fileInput = document.getElementById("editPfpFileInput");
           
@@ -594,6 +610,7 @@
 
           try {
               await update(ref(rtdb, `users/${uid}`), {
+                  displayName: nextDisplayName,
                   bio: nextBio,
                   socialLinks: updatedLinksArray,
                   pfp: finalBase64Pfp
