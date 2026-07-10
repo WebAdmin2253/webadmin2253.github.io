@@ -332,6 +332,15 @@
         gap: 6px;
         align-items: center;
     }
+    .comment-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        object-fit: cover;
+        background-color: #f6f7f8;
+        border: 1px solid #edeff1;
+        display: inline-block;
+    }
     .comment-author {
         font-weight: 600;
         color: #1a1a1b;
@@ -435,6 +444,11 @@
 
   marked.setOptions({ sanitize: true, breaks: true });
 
+  function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+  }
+
   async function initializeFlow() {
       if (currentUserJson) {
           try {
@@ -444,7 +458,6 @@
                   welcomeUser.textContent = `u/${activeUser.username}`;
                   welcomeUser.style.display = "inline";
                   
-                  // Run lookup against UID architecture
                   activeUserIsAdmin = await checkIsAdmin(activeUser.username);
               }
           } catch (e) { console.error(e); }
@@ -472,7 +485,6 @@
       }
   };
 
-  // Extracts YouTube ID from common video link formats
   function getYouTubeId(url) {
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
       const match = url.match(regExp);
@@ -483,13 +495,10 @@
       let result = htmlContent.replace(/\bc\/([a-zA-Z0-9_\-]+)/g, '<a class="chatter-community-link" href="home.html?c=$1">c/$1</a>');
       result = result.replace(/\bu\/([a-zA-Z0-9_\-]+)/g, '<a class="chatter-user-mention" href="user.html?u=$1">u/$1</a>');
       
-      // Parse custom !(YT)(URL) format into responsive iframes
       result = result.replace(/!\(YT\)\(([^)]+)\)/g, (match, url) => {
           const videoId = getYouTubeId(url.trim());
           if (videoId) {
-              return `<div class="youtube-embed-wrapper">
-                        <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
-                      </div>`;
+              return `<div class="youtube-embed-wrapper"><iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe></div>`;
           }
           return `<div style="color: #787c7e; font-size: 13px; font-style: italic;">[Invalid YouTube Link Provided]</div>`;
       });
@@ -497,7 +506,6 @@
       return result;
   }
 
-  // Inserts generic tags at textareas selection cursor bounds
   function insertUtilityToken(textareaId, mode) {
       const textarea = document.getElementById(textareaId);
       if (!textarea) return;
@@ -535,6 +543,31 @@
       return false;
   }
 
+  async function getUserProfileDetails(username) {
+      const fallback = { pfp: null, displayName: null };
+      if (!username || username === "deleted" || username === "anonymous") return fallback;
+      try {
+          const usersRef = ref(rtdb, "users");
+          const snap = await get(usersRef);
+          if (snap.exists()) {
+              let details = { ...fallback };
+              snap.forEach((child) => {
+                  const userData = child.val();
+                  if (userData.username && userData.username.toLowerCase() === username.toLowerCase()) {
+                      if (userData.pfp && userData.pfp.trim() !== "") {
+                          details.pfp = userData.pfp.trim();
+                      }
+                      if (userData.displayName && userData.displayName.trim() !== "") {
+                          details.displayName = userData.displayName.trim();
+                      }
+                  }
+              });
+              return details;
+          }
+      } catch (e) { console.error(e); }
+      return fallback;
+  }
+
   async function fetchPostDetails(id) {
       try {
           const postRef = ref(rtdb, `posts/${id}`);
@@ -555,6 +588,9 @@
           const authorIsAdmin = await checkIsAdmin(postData.username);
           const adminBadgeHtml = authorIsAdmin ? `<span class="badge-admin">admin</span>` : '';
 
+          const authorDetails = await getUserProfileDetails(originalPostAuthor);
+          const authorNameLabel = authorDetails.displayName ? escapeHTML(authorDetails.displayName) : `u/${originalPostAuthor}`;
+
           let ownerActionsHtml = "";
           if (activeUser && (activeUser.username === postData.username || activeUserIsAdmin)) {
               ownerActionsHtml = `
@@ -569,7 +605,7 @@
               <div class="post-view-card" id="postCardBody">
                   <div class="post-meta">
                       <span>Posted by</span>
-                      <a class="post-author" style="cursor:pointer; text-decoration:none;" href="user.html?u=${originalPostAuthor}">u/${originalPostAuthor}</a>
+                      <a class="post-author" style="cursor:pointer; text-decoration:none;" href="user.html?u=${originalPostAuthor}">${authorNameLabel}</a>
                       ${adminBadgeHtml}
                       <span>•</span>
                       <span>${postDate}</span>
@@ -770,6 +806,10 @@
       const commentAuthorAdmin = await checkIsAdmin(comment.username);
       const badgeHtml = commentAuthorAdmin ? `<span class="badge-admin">admin</span>` : '';
       
+      const userDetails = await getUserProfileDetails(comment.username);
+      const avatarHtml = userDetails.pfp ? `<img src="${userDetails.pfp}" class="comment-avatar" alt="pfp" />` : '';
+      const commentNameLabel = userDetails.displayName ? escapeHTML(userDetails.displayName) : `u/${comment.username || "anonymous"}`;
+      
       const renderedCommentMarkdown = marked.parse(comment.content || "");
       const parsedCommentContent = parseChatterMentions(renderedCommentMarkdown);
 
@@ -786,7 +826,8 @@
       commentCard.id = `comment-${comment.id}`;
       commentCard.innerHTML = `
           <div class="comment-meta">
-              <a class="comment-author" style="cursor:pointer; text-decoration:none;" href="user.html?u=${comment.username || "anonymous"}">u/${comment.username || "anonymous"}</a>
+              ${avatarHtml}
+              <a class="comment-author" style="cursor:pointer; text-decoration:none;" href="user.html?u=${comment.username || "anonymous"}">${commentNameLabel}</a>
               ${badgeHtml}
               <span>•</span>
               <span>${commentDate}</span>
@@ -901,15 +942,14 @@
 
       formBox.querySelector("form").onsubmit = async (e) => {
           e.preventDefault();
-          const textArea = document.getElementById(`text-${commentId}`);
-          let textVal = textArea.value.trim();
-          
-          if (!textVal) return;
+          const inputField = document.getElementById(`text-${commentId}`);
+          const val = inputField.value.trim();
+          if (!val) return;
 
           try {
               await push(ref(rtdb, `posts/${postId}/comments`), {
                   username: activeUser.username,
-                  content: textVal,
+                  content: val,
                   timestamp: Date.now(),
                   parentId: commentId
               });
@@ -917,11 +957,8 @@
           } catch (err) { alert(err.message); }
       };
   }
-
-  function escapeHTML(str) {
-      return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
-  }
 </script>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
@@ -946,7 +983,6 @@
       try {
           const activeUser = JSON.parse(currentUserJson);
           if (!activeUser || !activeUser.username) return;
-
           if (window.location.pathname.endsWith("banned.html")) return;
 
           const usersRef = ref(rtdb, "users");
